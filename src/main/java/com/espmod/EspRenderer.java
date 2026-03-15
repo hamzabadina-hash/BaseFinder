@@ -1,9 +1,10 @@
 package com.espmod;
 
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.VertexRendering;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -14,7 +15,7 @@ public class EspRenderer {
     public static void drawBox(MatrixStack matrices, Camera camera, BlockPos pos,
                                 float r, float g, float b) {
         try {
-            MinecraftClient client = net.minecraft.client.MinecraftClient.getInstance();
+            MinecraftClient client = MinecraftClient.getInstance();
             if (client.getBufferBuilders() == null) return;
 
             VertexConsumerProvider.Immediate immediate =
@@ -27,12 +28,37 @@ public class EspRenderer {
             matrices.push();
             matrices.translate(pos.getX() - camX, pos.getY() - camY, pos.getZ() - camZ);
 
-            Box box = new Box(0, 0, 0, 1, 1, 1).expand(0.01);
-            VertexRendering.drawOutlinedBox(matrices, immediate.getBuffer(RenderLayer.LINES),
-                    box, r, g, b, 1.0f);
+            Box box = new Box(0, 0, 0, 1, 1, 1);
+            VertexConsumer buffer = immediate.getBuffer(RenderLayer.LINES);
+
+            drawLine(buffer, matrices, 0, 0, 0, 1, 0, 0, r, g, b);
+            drawLine(buffer, matrices, 1, 0, 0, 1, 1, 0, r, g, b);
+            drawLine(buffer, matrices, 1, 1, 0, 0, 1, 0, r, g, b);
+            drawLine(buffer, matrices, 0, 1, 0, 0, 0, 0, r, g, b);
+            drawLine(buffer, matrices, 0, 0, 1, 1, 0, 1, r, g, b);
+            drawLine(buffer, matrices, 1, 0, 1, 1, 1, 1, r, g, b);
+            drawLine(buffer, matrices, 1, 1, 1, 0, 1, 1, r, g, b);
+            drawLine(buffer, matrices, 0, 1, 1, 0, 0, 1, r, g, b);
+            drawLine(buffer, matrices, 0, 0, 0, 0, 0, 1, r, g, b);
+            drawLine(buffer, matrices, 1, 0, 0, 1, 0, 1, r, g, b);
+            drawLine(buffer, matrices, 1, 1, 0, 1, 1, 1, r, g, b);
+            drawLine(buffer, matrices, 0, 1, 0, 0, 1, 1, r, g, b);
 
             immediate.draw(RenderLayer.LINES);
             matrices.pop();
         } catch (Exception ignored) {}
+    }
+
+    private static void drawLine(VertexConsumer buffer, MatrixStack matrices,
+                                  float x1, float y1, float z1,
+                                  float x2, float y2, float z2,
+                                  float r, float g, float b) {
+        Matrix4f matrix = matrices.peek().getPositionMatrix();
+        float dx = x2 - x1;
+        float dy = y2 - y1;
+        float dz = z2 - z1;
+        float len = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+        buffer.vertex(matrix, x1, y1, z1).color(r, g, b, 1.0f).normal(dx / len, dy / len, dz / len);
+        buffer.vertex(matrix, x2, y2, z2).color(r, g, b, 1.0f).normal(dx / len, dy / len, dz / len);
     }
 }
