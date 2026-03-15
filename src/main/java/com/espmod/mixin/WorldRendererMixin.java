@@ -9,6 +9,7 @@ import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.math.BlockPos;
@@ -49,11 +50,11 @@ public class WorldRendererMixin {
         if (!EspModClient.espEnabled) return;
         if (client.player == null || client.world == null) return;
 
-        World world = client.world;
+        ClientWorld world = client.world;
         MatrixStack matrices = new MatrixStack();
         matrices.multiplyPositionMatrix(matrix4f2);
 
-        for (BlockEntity be : world.iterateBlockEntities()) {
+        for (BlockEntity be : world.getBlockEntities()) {
             BlockPos pos = be.getPos();
             float[] color = null;
 
