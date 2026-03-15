@@ -13,12 +13,15 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.util.math.ChunkPos;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Mixin(WorldRenderer.class)
 public class WorldRendererMixin {
@@ -54,7 +57,23 @@ public class WorldRendererMixin {
         MatrixStack matrices = new MatrixStack();
         matrices.multiplyPositionMatrix(matrix4f2);
 
-        for (BlockEntity be : world.getBlockEntities()) {
+        // Get block entities from loaded chunks
+        List<BlockEntity> blockEntities = new ArrayList<>();
+        BlockPos playerPos = client.player.getBlockPos();
+        int renderDist = 4; // chunks radius
+
+        for (int cx = -renderDist; cx <= renderDist; cx++) {
+            for (int cz = -renderDist; cz <= renderDist; cz++) {
+                int chunkX = (playerPos.getX() >> 4) + cx;
+                int chunkZ = (playerPos.getZ() >> 4) + cz;
+                var chunk = world.getChunk(chunkX, chunkZ,
+                        net.minecraft.world.chunk.ChunkStatus.FULL, false);
+                if (chunk == null) continue;
+                blockEntities.addAll(chunk.getBlockEntities().values());
+            }
+        }
+
+        for (BlockEntity be : blockEntities) {
             BlockPos pos = be.getPos();
             float[] color = null;
 
