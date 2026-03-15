@@ -2,17 +2,17 @@ package com.espmod.mixin;
 
 import com.espmod.EspModClient;
 import com.espmod.EspRenderer;
+import net.minecraft.block.entity.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraft.block.entity.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -30,50 +30,46 @@ public class WorldRendererMixin {
                           Matrix4f matrix4f, Matrix4f matrix4f2,
                           CallbackInfo ci) {
 
-        if (!EspModClient.espEnabled) return;
-
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null || client.world == null) return;
 
-        // Handle keybind
         while (EspModClient.toggleKey.wasPressed()) {
             EspModClient.espEnabled = !EspModClient.espEnabled;
-            client.player.sendMessage(
-                net.minecraft.text.Text.literal(
-                    EspModClient.espEnabled ? "[ESP] ON" : "[ESP] OFF"
-                ).formatted(EspModClient.espEnabled ?
-                    net.minecraft.util.Formatting.GREEN :
-                    net.minecraft.util.Formatting.RED),
-                true
-            );
+            if (client.player != null) {
+                client.player.sendMessage(
+                    net.minecraft.text.Text.literal(
+                        EspModClient.espEnabled ? "[ESP] ON" : "[ESP] OFF"
+                    ).formatted(EspModClient.espEnabled ?
+                        net.minecraft.util.Formatting.GREEN :
+                        net.minecraft.util.Formatting.RED),
+                    true
+                );
+            }
         }
 
         if (!EspModClient.espEnabled) return;
+        if (client.player == null || client.world == null) return;
 
         World world = client.world;
         MatrixStack matrices = new MatrixStack();
         matrices.multiplyPositionMatrix(matrix4f2);
 
-        // Loop through loaded block entities
-        for (BlockEntity be : world.getBlockEntities()) {
+        for (BlockEntity be : world.iterateBlockEntities()) {
             BlockPos pos = be.getPos();
-
             float[] color = null;
 
             if (be instanceof ChestBlockEntity chest) {
-                // Check if chest has valuable items
                 if (hasValuableItem(chest)) {
-                    color = new float[]{1.0f, 0.84f, 0.0f}; // Gold for valuable chests
+                    color = new float[]{1.0f, 0.84f, 0.0f};
                 } else {
-                    color = new float[]{0.0f, 1.0f, 1.0f}; // Cyan for normal chests
+                    color = new float[]{0.0f, 1.0f, 1.0f};
                 }
             } else if (be instanceof MobSpawnerBlockEntity) {
-                color = new float[]{1.0f, 0.0f, 0.0f}; // Red for spawners
+                color = new float[]{1.0f, 0.0f, 0.0f};
             } else if (be instanceof ShulkerBoxBlockEntity shulker) {
                 if (hasValuableItem(shulker)) {
-                    color = new float[]{1.0f, 0.84f, 0.0f}; // Gold for valuable shulkers
+                    color = new float[]{1.0f, 0.84f, 0.0f};
                 } else {
-                    color = new float[]{0.6f, 0.0f, 0.8f}; // Purple for normal shulkers
+                    color = new float[]{0.6f, 0.0f, 0.8f};
                 }
             }
 
